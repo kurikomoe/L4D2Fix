@@ -1,0 +1,15 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 25,
+        "patch": 0
+    },
+    "include": [
+        "cmake/presets/linux.json",
+        "cmake/presets/windows.json"
+    ],
+    "configurePresets": [ ],
+    "buildPresets": [ ],
+    "testPresets": [ ]
+}

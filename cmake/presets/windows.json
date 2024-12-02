@@ -1,0 +1,76 @@
+{
+    "version": 6,
+    "include": ["base.json"],
+    "configurePresets": [
+        {
+            "name": "config-base-windows",
+            "displayName": "base Configuration for windows",
+            "inherits": "config-base",
+            "hidden": true,
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name": "x64-debug-msvc",
+            "inherits": "config-base-windows",
+            "generator": "",
+            "architecture":{
+                "value": "x64",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE" : "Debug",
+                "CMAKE_GENERATOR_PLATFORM": "x64"
+            }
+        },
+        {
+            "name": "x64-release-msvc",
+            "inherits": "x64-debug-msvc",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE" : "Release"
+            }
+        },
+        {
+            "name": "x86-debug-msvc",
+            "inherits": "config-base-windows",
+            "generator": "",
+            "architecture":{
+                "value": "x86",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE" : "Debug",
+                "CMAKE_GENERATOR_PLATFORM": "Win32"
+            }
+        },
+        {
+            "name": "x86-release-msvc",
+            "inherits": "x86-debug-msvc",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE" : "Release"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "x64-debug-msvc",
+            "configurePreset": "x64-debug-msvc"
+        },
+        {
+            "name": "x64-release-msvc",
+            "configurePreset": "x64-release-msvc"
+        },
+        {
+            "name": "x86-debug-msvc",
+            "configurePreset": "x86-debug-msvc"
+        },
+        {
+            "name": "x86-release-msvc",
+            "configurePreset": "x86-release-msvc"
+        }
+    ],
+    "testPresets": [ ]
+}
