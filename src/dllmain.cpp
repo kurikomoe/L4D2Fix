@@ -67,6 +67,8 @@ void Logging()
 DWORD __stdcall Main(void*) {
     Logging();
     std::filesystem::path startup_check = L"success.txt";
+    // MessageBoxW(NULL, L"警告：这是测试版补丁，设定为必定会炸，用于检测补丁是否正确应用。", L"L4D2 Fix", MB_OK);
+
     if (!std::filesystem::exists(startup_check)) {
         MessageBoxW(NULL, L"这是一个启动测试，用于检验补丁是否正常运行。\n请注意由于修改内存，请不要进 VAC 服，后果未知。\n本弹窗仅首次启动出现，后续运行情况参见 L4D2Fix.log 日志文件。\n\n关注B站 5050 直播间，谢谢喵 by KurikoMoe!", L"L4D2 Fix", MB_OK);
     }
@@ -80,8 +82,11 @@ DWORD __stdcall Main(void*) {
     auto f = [&](const char* tag, const char* pattern, size_t offset, size_t w_offset) {
         std::uint8_t* ptr = Memory::PatternScan(hDll, pattern);
 
+        constexpr uint32_t new_buffer_size = 0x020000;
+        // constexpr uint32_t new_buffer_size = 32;
+
         if (ptr != nullptr) {
-            Memory::Write((uintptr_t)(ptr + w_offset), (uint32_t)0x020000);
+            Memory::Write((uintptr_t)(ptr + w_offset), new_buffer_size);
             spdlog::info("Modified the vertex max buffer shaderapidx9.dll: {}", tag);
             return ptr;
         }
@@ -102,7 +107,12 @@ DWORD __stdcall Main(void*) {
     // Not known
     auto ptr3 = f("Unknown", "0F B6 C0 50 68 00 80 00 00 53 8B CF E8 ?? ?? ?? ??", (size_t)ptr1, 5);
 
-    if (ptr1 == nullptr || ptr2 == nullptr || ptr3 == nullptr) {
+    if (ptr1 == nullptr
+        || ptr1_1 == nullptr
+        || ptr2 == nullptr
+        || ptr2_1 == nullptr
+        || ptr3 == nullptr
+    ) {
         MessageBoxW(NULL, L"未能正常应用补丁，patch 未生效，请联系开发者", L"L4D2 Fix", MB_OK);
     } else {
         std::fstream file(startup_check, std::ios::out);
@@ -117,12 +127,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
     switch (ul_reason_for_call) {
     case DLL_PROCESS_ATTACH:
-        HANDLE mainHandle = CreateThread(NULL, 0, Main, 0, CREATE_SUSPENDED, 0);
-        if (mainHandle) {
-            SetThreadPriority(mainHandle, THREAD_PRIORITY_TIME_CRITICAL);
-            ResumeThread(mainHandle);
-            CloseHandle(mainHandle);
-        }
+        Main(nullptr);
+        // HANDLE mainHandle = CreateThread(NULL, 0, Main, 0, CREATE_SUSPENDED, 0);
+        // if (mainHandle) {
+        //     SetThreadPriority(mainHandle, THREAD_PRIORITY_TIME_CRITICAL);
+        //     ResumeThread(mainHandle);
+        //     CloseHandle(mainHandle);
+        // }
         break;
     }
     return TRUE;
