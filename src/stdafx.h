@@ -7,6 +7,7 @@
 #include <windows.h>
 #include <fstream>
 #include <iostream>
-#include <inttypes.h>
 #include <filesystem>
 #include <string>
+#include <cstdint>
+#include <cstddef>

@@ -17,7 +17,12 @@ config:
 
 build:
     cmake --build --preset {{preset}} --config Release
-    cp -f ./build/x86-release-msvc/bin/Release/kpatch.dll "{{TARGET}}/kpatch.asi"
+
+copy: build
+    cd ./build/x86-release-msvc/bin/Release && \
+        cp -f kpatch.dll "{{TARGET}}/kpatch.asi" && \
+        cp -f fmt.dll "{{TARGET}}/"
+    cp -f third/version.dll "{{TARGET}}/"
 
 @run:
     ./build/{{preset}}/bin/{{target}}
