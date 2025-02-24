@@ -130,7 +130,7 @@ DWORD __stdcall Main(void*) {
         || ptr2_1 == nullptr
         || ptr3 == nullptr
     ) {
-        MessageBoxW(NULL, L"未能正常应用补丁，patch 未生效，请联系开发者", L"L4D2 Fix", MB_OK);
+        MessageBoxW(NULL, L"未能正常应用补丁，patch 未生效，请联系开发者\n这只是一个警告，可能不影响游戏运行", L"L4D2 Fix", MB_OK);
     } else {
         std::fstream file(startup_check, std::ios::out);
         file << "补丁已生效，关闭启动提示，删除本文件可以重新启用" << std::endl;
