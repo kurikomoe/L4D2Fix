@@ -4,6 +4,12 @@
 
 ![26cc8e80ba807d378291266749f824bc](https://github.com/user-attachments/assets/9a6aed1c-ef76-43a0-b9bb-dd357f0b9261)
 
+### 临时说明
+
+目前由于不知名原因 patch 在部分机子上可能无效，因此请测试 1.1.0 和 1.1.1 两个版本，哪个能用就先用哪个。
+
+> 等我写完我的中期报告后再 debug
+
 ### 编译
 ```
 just config build
