@@ -2,10 +2,21 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
-#include <cctype>
+#include <windows.h>
+#include <libloaderapi.h>
+
+#include <cstdint>
+#include <cstddef>
+#include <iostream>
+#include <filesystem>
+
 #include <algorithm>
+#include <detours/detours.h>
 
 #include "helper.hpp"
+
+constexpr bool isDebug = true;
+constexpr bool isTesting = true;
 
 HMODULE baseModule = GetModuleHandle(NULL);
 HMODULE thisModule; // Fix DLL
@@ -21,7 +32,16 @@ std::filesystem::path sExePath;
 std::string sExeName;
 std::filesystem::path sThisModulePath;
 
+void InitConsole() {
+    AllocConsole();
+    FILE *dummy;
+    freopen_s(&dummy, "CONOUT$", "w", stdout);
+}
+
 void Logging() {
+    if constexpr (isDebug) {
+        InitConsole();
+    }
     // Get this module path
     WCHAR thisModulePath[_MAX_PATH] = { 0 };
     GetModuleFileNameW(thisModule, thisModulePath, MAX_PATH);
@@ -57,18 +77,18 @@ void Logging() {
         spdlog::info("Module Timestamp: {0:d}", Memory::ModuleTimestamp(baseModule));
         spdlog::info("----------");
     } catch (const spdlog::spdlog_ex &ex) {
-        AllocConsole();
-        FILE *dummy;
-        freopen_s(&dummy, "CONOUT$", "w", stdout);
-        std::cout << "Log initialisation failed: " << ex.what() << std::endl;
-        FreeLibraryAndExitThread(baseModule, 1);
+        InitConsole();
     }
 }
 
 DWORD __stdcall Main(void*) {
     Logging();
+
+    if constexpr (isTesting) {
+        MessageBoxW(NULL, L"警告：这是测试版补丁，设定为必定会炸，用于检测补丁是否正确应用。", L"L4D2 Fix", MB_OK|MB_SYSTEMMODAL|MB_ICONWARNING);
+    }
+
     std::filesystem::path startup_check = L"success.txt";
-    // MessageBoxW(NULL, L"警告：这是测试版补丁，设定为必定会炸，用于检测补丁是否正确应用。", L"L4D2 Fix", MB_OK|MB_SYSTEMMODAL|MB_ICONWARNING);
 
     if (!std::filesystem::exists(startup_check)) {
         MessageBoxW(
@@ -80,31 +100,51 @@ DWORD __stdcall Main(void*) {
     std::wstring cmdline = GetCommandLineW();
     spdlog::info(L"Startup commandline: {}", cmdline.c_str());
 
-    std::wstring dllName;
-    std::transform(cmdline.cbegin(), cmdline.cend(), cmdline.begin(), ::tolower);
+    std::wstring dllName = L"shaderapidx9.dll";
+    bool isVulkan = false;
 
+    std::transform(cmdline.cbegin(), cmdline.cend(), cmdline.begin(), ::tolower);
     if (cmdline.find(L"-vulkan") != std::wstring::npos) {
         dllName = L"shaderapivk.dll";
         spdlog::info(L"Detected Vulkan: using {}", dllName);
+        isVulkan = true;
     } else {
-        dllName = L"shaderapidx9.dll";
+        spdlog::info(L"Detected DirectX9: using {}", dllName);
     }
-    auto hDll = LoadLibraryW(dllName.c_str());
+
+    auto relPath = std::filesystem::path(L"bin") / dllName;
+    auto absPath = std::filesystem::absolute(relPath);
+
+    std::wcout << absPath << std::endl;
+    spdlog::info(L"Loading Dll fromg {}", absPath.wstring());
+
+    HMODULE hDll = LoadLibraryExW(absPath.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
 
     if (hDll == nullptr) {
-        MessageBoxW(NULL, std::format(L"Failed to load {}!", dllName).c_str(), L"L4D2 Fix", MB_OK|MB_SYSTEMMODAL|MB_ICONSTOP);
+        auto errCode = GetLastError();
+        wchar_t buf[255];
+        FormatMessageW(
+            FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+            NULL, errCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+            buf, (sizeof(buf) / sizeof(wchar_t)), NULL);
+        std::wcout << errCode << std::endl;
+        std::wcout << buf << std::endl;
+        MessageBoxW(NULL, std::format(L"Failed to load {}!", dllName).c_str(), L"L4D2 Fix", MB_OK | MB_SYSTEMMODAL | MB_ICONSTOP);
         exit(-1);
     }
 
+    // Tag, pattern, start_search_path, write_offset
     auto f = [&](const wchar_t* tag, const char* pattern, size_t offset, size_t w_offset) {
-        std::uint8_t* ptr = Memory::PatternScan(hDll, pattern);
+        std::uint8_t* ptr = Memory::PatternScan(hDll, pattern, offset);
 
-        constexpr uint32_t new_buffer_size = 0x020000;
-        // constexpr uint32_t new_buffer_size = 32;
+        uint32_t new_buffer_size = 0x020000;
+        if constexpr (isTesting) {
+            new_buffer_size = 32;
+        }
 
         if (ptr != nullptr) {
             Memory::Write((uintptr_t)(ptr + w_offset), new_buffer_size);
-            spdlog::info(L"Modified the vertex max buffer {}: {}", dllName, tag);
+            spdlog::info(L"Modified the vertex max buffer {}: {} @ 0x{:0x}", dllName, tag, (intptr_t)(ptr) - (intptr_t)hDll);
             return ptr;
         }
 
@@ -112,24 +152,58 @@ DWORD __stdcall Main(void*) {
         return (uint8_t*)nullptr;
     };
 
-    // CreateEmptyColorMesh
-    auto ptr1 = f(L"CreateEmptyColorMesh", "68 ?? ?? ?? ?? 68 00 80 00 00 6A 04", 0, 6);
 
-    auto ptr1_1 = f(L"CreateEmptyColorMesh Later", "68 00 80 00 00 50 8B", (size_t)ptr1, 1);
+    std::vector<void*> ptr_cache;
+    std::string pattern;
+    // CreateEmptyColorMesh
+
+    pattern = "68 ?? ?? ?? ?? 68 00 80 00 00 6A 04";
+    auto* ptr1 = f(
+        L"CreateEmptyColorMesh",
+        pattern.c_str(),
+        0,
+        6
+    );
+    ptr_cache.push_back(ptr1);
+
+    pattern = "68 00 80 00 00 50 8B";
+    auto* ptr1_1 = f(
+        L"CreateEmptyColorMesh Later",
+        pattern.c_str(),
+        (size_t)ptr1,
+        1
+    );
+    ptr_cache.push_back(ptr1_1);
 
     // CreateVertexIDBuffer
-    auto ptr2 = f(L"CreateVertexIDBuffer", "68 ?? ?? ?? ?? 68 00 80 00 00 6A 04", (size_t)ptr1_1, 6);
-    auto ptr2_1 = f(L"CreateVertexIDBuffer Later", "68 00 80 00 00 50 8B", (size_t)ptr2, 1);
+    pattern = "68 ?? ?? ?? ?? 68 00 80 00 00 6A 04";
+    auto* ptr2 = f(
+        L"CreateVertexIDBuffer",
+        pattern.c_str(),
+        (size_t)ptr1_1,
+        6
+    );
+    ptr_cache.push_back(ptr2);
 
+    pattern = "68 00 80 00 00 50 8B";
+    auto* ptr2_1 = f(
+        L"CreateVertexIDBuffer Later",
+        pattern.c_str(),
+        (size_t)ptr2,
+        1
+    );
+    ptr_cache.push_back(ptr2_1);
+
+    auto* ptr3 = f(
+        L"Unknown",
+        "0F B6 C0 50 68 00 80 00 00 53 8B CF E8 ?? ?? ?? ??",
+        (size_t)ptr2,
+        5
+    );
+    ptr_cache.push_back(ptr3);
     // Not known
-    auto ptr3 = f(L"Unknown", "0F B6 C0 50 68 00 80 00 00 53 8B CF E8 ?? ?? ?? ??", (size_t)ptr1, 5);
 
-    if (ptr1 == nullptr
-        || ptr1_1 == nullptr
-        || ptr2 == nullptr
-        || ptr2_1 == nullptr
-        || ptr3 == nullptr
-    ) {
+    if (std::ranges::any_of(ptr_cache, [](void* ptr) { return ptr == nullptr; })) {
         MessageBoxW(NULL, L"未能正常应用补丁，patch 未生效，请联系开发者\n这只是一个警告，可能不影响游戏运行", L"L4D2 Fix", MB_OK);
     } else {
         std::fstream file(startup_check, std::ios::out);
@@ -150,5 +224,5 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
     return TRUE;
 }
 
-
+// Detour needs at least on exported function
 void __declspec(dllexport) kuriko_export() {}

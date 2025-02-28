@@ -85,3 +85,13 @@ _deps
 *.app
 
 # End of https://www.toptal.com/developers/gitignore/api/c++
+# Created by https://www.toptal.com/developers/gitignore/api/xmake
+# Edit at https://www.toptal.com/developers/gitignore?templates=xmake
+
+### xmake ###
+# Xmake cache
+.xmake/
+build/
+
+# End of https://www.toptal.com/developers/gitignore/api/xmake
+

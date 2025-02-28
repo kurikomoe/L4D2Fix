@@ -1,4 +1,8 @@
-#include "stdafx.h"
+#include <cassert>
+#include <windows.h>
+#include <cstdint>
+#include <cstddef>
+#include <vector>
 
 namespace Memory
 {
@@ -52,7 +56,12 @@ namespace Memory
         auto s = patternBytes.size();
         auto d = patternBytes.data();
 
-        for (auto i = offset; i < sizeOfImage - s; ++i) {
+        auto new_offset = 0;
+        if (offset != 0) {
+            assert((intptr_t)offset > (intptr_t)&scanBytes[0]);
+            new_offset = offset - (intptr_t)&scanBytes[0];
+        }
+        for (auto i = new_offset; i < sizeOfImage - s; ++i) {
             bool found = true;
             for (auto j = 0ul; j < s; ++j) {
                 if (scanBytes[i + j] != d[j] && d[j] != -1) {
@@ -87,21 +96,3 @@ namespace Memory
         return (address + 4 + *reinterpret_cast<std::int32_t*>(address));
     }
 }
-
-// namespace Util
-// {
-//     std::pair<int, int> GetPhysicalDesktopDimensions() {
-//         if (DEVMODE devMode{ .dmSize = sizeof(DEVMODE) }; EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &devMode))
-//             return { devMode.dmPelsWidth, devMode.dmPelsHeight };
-
-//         return {};
-//     }
-
-//     int HexStringToInt(const std::string& hexString) {
-//         int num;
-//         std::stringstream ss;
-//         ss << std::hex << hexString;
-//         ss >> num;
-//         return num;
-//     }
-// }
