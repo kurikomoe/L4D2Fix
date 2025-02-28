@@ -15,8 +15,18 @@
 
 #include "helper.hpp"
 
+#ifdef NDEBUG
+constexpr bool isDebug = false;
+#else
 constexpr bool isDebug = true;
+#endif
+
+#ifdef NTESTING
+constexpr bool isTesting = false;
+#else
 constexpr bool isTesting = true;
+#endif
+
 
 HMODULE baseModule = GetModuleHandle(NULL);
 HMODULE thisModule; // Fix DLL
