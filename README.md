@@ -1,3 +1,5 @@
+[![Github All Releases](https://img.shields.io/github/downloads/kurikomoe/L4D2Fix/total.svg)]()
+
 ### L4D2 Too Many Indices Fix
 
 用来处理这个问题：
