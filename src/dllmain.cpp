@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <detours/detours.h>
+#include <MinHook.h>
 
 #include "helper.hpp"
 
@@ -23,8 +24,10 @@ constexpr bool isDebug = true;
 
 #ifdef NTESTING
 constexpr bool isTesting = false;
+constexpr int VERTEX_BUFFER_SIZE = 0x020000;
 #else
 constexpr bool isTesting = true;
+constexpr int VERTEX_BUFFER_SIZE = 32;
 #endif
 
 
@@ -33,7 +36,7 @@ HMODULE thisModule; // Fix DLL
 
 // Version
 std::string sFixName = "L4D2Fix";
-std::string sFixVer = "1.1.0";
+std::string sFixVer = "1.3.0";
 std::string sLogFile = sFixName + ".log";
 
 // Logger
@@ -72,6 +75,10 @@ void Logging() {
 
         auto start_time = std::chrono::system_clock::now();
 
+        if (isDebug) {
+            spdlog::set_level(spdlog::level::debug);
+        }
+
         spdlog::flush_on(spdlog::level::debug);
         spdlog::info("----------");
         spdlog::info("Date: {}", std::chrono::system_clock::to_time_t(start_time));
@@ -90,6 +97,128 @@ void Logging() {
         InitConsole();
     }
 }
+
+
+using CVertexBufferCtorFn = void* (__thiscall*)(void*, int, int, int, int, int, int, char*, char, char);
+CVertexBufferCtorFn oCVertexBufferCtorFn = nullptr;
+CVertexBufferCtorFn tCVertexBufferCtorFn = nullptr;
+intptr_t nCVertexBufferCtorFn = NULL;
+
+void*__fastcall hCVertexBufferCtorFn(
+    void* This,
+    DWORD EDX,
+    int a2,
+    int a3,
+    int a4,
+    int a5,
+    int count,
+    int bufSize,
+    char * source,
+    char a6,
+    char a7)
+{
+    // std::string msg = std::format(
+    //     "This: {:x}, EDX: {:x}, a2: {:x}, a3: {}, a4: {}, a5: {}, count: {}, bufSize: {}, source: {}, a6: {}, a7: {}",
+    //     (intptr_t)This,
+    //     EDX,
+    //     a2, a3, a4, a5,
+    //     count, bufSize,
+    //     source, (int)a6, (int)a7
+    // );
+    // spdlog::info(msg);
+    // MessageBoxW(NULL, L"inside CVertexBufferCtorFn", L"", MB_OK);
+
+    if (isDebug) {
+        return tCVertexBufferCtorFn(This, a2, a3, a4, a5,
+            count,
+            32,
+            source, a6, a7);
+    }
+
+    return tCVertexBufferCtorFn(This, a2, a3, a4, a5,
+        std::max(1, count * bufSize / VERTEX_BUFFER_SIZE),
+        VERTEX_BUFFER_SIZE,
+        source, a6, a7);
+}
+
+void __declspec(naked) nakedCVertexBufferCtorFn() {
+    __asm {
+        call hCVertexBufferCtorFn
+        jmp nCVertexBufferCtorFn
+    };
+}
+
+using GetMaxToRenderFn = int (__thiscall*)(void*, DWORD*, char, int*, int*);
+GetMaxToRenderFn oGetMaxToRender = nullptr;
+
+int __fastcall hGetMaxToRender(
+    void* This,
+    DWORD EDX,
+    DWORD* a2,
+    char a3,
+    int* p_bufsize,
+    int* p_nCount
+) {
+    auto ret = oGetMaxToRender(This, a2, a3, p_bufsize, p_nCount);
+    // spdlog::debug("p_bufSize: {} {:x}, p_nCount: {} {:x}", *p_bufsize, *p_bufsize, *p_nCount, *p_nCount);
+    if (*p_bufsize == 32768)  *p_bufsize = VERTEX_BUFFER_SIZE;
+    return ret;
+}
+
+
+bool fixDynamicVB(HMODULE hDll) {
+    const char* pat = "0F B6 C8 8B 45 10 51 8B 4D FC 99 68 ?? ?? ?? ?? 68 00 80 00 00";
+    size_t offset_imm = 0xe13b - 0xe12a;
+    size_t offset_call = 0xe152 - 0xe12a;
+    std::uint8_t* ptr = Memory::PatternScan(hDll, pat, 0);
+    if (ptr == nullptr) {
+        spdlog::info(L"Can not find the DynamicVB call");
+        return false;
+    }
+    spdlog::info(L"Hook DynamicVB Call success");
+
+    ptr += offset_call;
+    spdlog::info(L"Modified the DynamicVB call @ 0x{:0x}", (intptr_t)ptr - (intptr_t)hDll);
+    oCVertexBufferCtorFn = reinterpret_cast<CVertexBufferCtorFn>(ptr);
+    nCVertexBufferCtorFn = reinterpret_cast<intptr_t>(ptr) + 0x5;
+
+    // copy the target address, call is followed by an relative address
+    const char* pat_GameCVertexBufferCtor = "55 8B EC 81 EC 08 01 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 FC 53 56 57 8B 45 08 8B 55 10";
+    std::uint8_t* ptr_GameCVertexBufferCtor = Memory::PatternScan(hDll, pat_GameCVertexBufferCtor, 0);
+    if (ptr_GameCVertexBufferCtor == nullptr) {
+        spdlog::info(L"Can not find the GameCVertexBufferCtor");
+        return false;
+    }
+    tCVertexBufferCtorFn = reinterpret_cast<CVertexBufferCtorFn>(ptr_GameCVertexBufferCtor);
+    spdlog::info(L"Hook GameCVertexBufferCtor success");
+
+    const char* pat_GetMaxToRender = "55 8B EC 57 8B 7D 08 85 FF 75 ?? 8B 45 10 89 38";
+    std::uint8_t* ptr_GetMaxToRender = Memory::PatternScan(hDll, pat_GetMaxToRender, 0);
+    oGetMaxToRender = reinterpret_cast<GetMaxToRenderFn>(ptr_GetMaxToRender);
+    if (oGetMaxToRender == nullptr) {
+        spdlog::info(L"Can not find the GetMaxToRender");
+        return false;
+    }
+    spdlog::info(L"Hook GetMaxToRender success");
+
+    // Only for debugging
+    // Memory::Write((uintptr_t)hDll + 0xbb67, (uint16_t)0x9090);
+
+    DetourRestoreAfterWith();
+    DetourTransactionBegin();
+    DetourUpdateThread(GetCurrentThread());
+
+    DetourAttach(&(PVOID&)oCVertexBufferCtorFn, nakedCVertexBufferCtorFn);
+
+    DetourAttach(&(PVOID&)oGetMaxToRender, hGetMaxToRender);
+
+    DetourTransactionCommit();
+
+    spdlog::info(L"New DynamicVB call to 0x{:0x}", (intptr_t)oCVertexBufferCtorFn);
+
+    return true;
+}
+
 
 DWORD __stdcall Main(void*) {
     Logging();
@@ -147,10 +276,8 @@ DWORD __stdcall Main(void*) {
     auto f = [&](const wchar_t* tag, const char* pattern, size_t offset, size_t w_offset) {
         std::uint8_t* ptr = Memory::PatternScan(hDll, pattern, offset);
 
-        uint32_t new_buffer_size = 0x020000;
-        if constexpr (isTesting) {
-            new_buffer_size = 32;
-        }
+        uint32_t new_buffer_size = VERTEX_BUFFER_SIZE;
+        // uint32_t new_buffer_size = 0x020000;
 
         if (ptr != nullptr) {
             Memory::Write((uintptr_t)(ptr + w_offset), new_buffer_size);
@@ -213,7 +340,9 @@ DWORD __stdcall Main(void*) {
     ptr_cache.push_back(ptr3);
     // Not known
 
-    if (std::ranges::any_of(ptr_cache, [](void* ptr) { return ptr == nullptr; })) {
+    auto ret = fixDynamicVB(hDll);
+
+    if (!ret || std::ranges::any_of(ptr_cache, [](void* ptr) { return ptr == nullptr; })) {
         MessageBoxW(NULL, L"未能正常应用补丁，patch 未生效，请联系开发者\n这只是一个警告，可能不影响游戏运行", L"L4D2 Fix", MB_OK);
     } else {
         std::fstream file(startup_check, std::ios::out);
@@ -224,11 +353,21 @@ DWORD __stdcall Main(void*) {
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
+    if (DetourIsHelperProcess()) {
+        return TRUE;
+    }
+
     thisModule = hModule;
 
     switch (ul_reason_for_call) {
     case DLL_PROCESS_ATTACH:
         Main(nullptr);
+        // HANDLE mainHandle = CreateThread(NULL, 0, Main, 0, CREATE_SUSPENDED, 0);
+        // if (mainHandle) {
+        //     SetThreadPriority(mainHandle, THREAD_PRIORITY_TIME_CRITICAL);
+        //     ResumeThread(mainHandle);
+        //     CloseHandle(mainHandle);
+        // }
         break;
     }
     return TRUE;

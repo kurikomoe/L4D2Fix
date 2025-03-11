@@ -13,9 +13,16 @@ clean:
     rm -rf build
 
 build:
+    xmake f -m testing
     xmake
 
 copy: build
+    cp build/windows/x86/testing/kpatch.dll "{{TARGET}}"
+    cp build/windows/x86/testing/left4dead2_fix.exe "{{TARGET}}"
+
+copyrel:
+    xmake f -m release
+    xmake
     cp build/windows/x86/release/kpatch.dll "{{TARGET}}"
     cp build/windows/x86/release/left4dead2_fix.exe "{{TARGET}}"
 
