@@ -13,12 +13,12 @@ clean:
     rm -rf build
 
 build:
-    xmake f -m testing
+    xmake f -m release
     xmake
 
 copy: build
-    cp build/windows/x86/testing/kpatch.dll "{{TARGET}}"
-    cp build/windows/x86/testing/left4dead2_fix.exe "{{TARGET}}"
+    cp build/windows/x86/release/kpatch.dll "{{TARGET}}"
+    cp build/windows/x86/release/left4dead2_fix.exe "{{TARGET}}"
 
 copyrel:
     xmake f -m release
@@ -28,7 +28,7 @@ copyrel:
 
 release:
     rm release -rf
-    mkdir -p release/testing
+    mkdir -p release
 
     # release
     xmake f -m release
@@ -37,14 +37,7 @@ release:
     cp build/windows/x86/release/left4dead2_fix.exe release/
     cp assets/请读我.txt                             release/
     cp third/4gb_patch.exe                          release/
-
-    # testing
-    xmake f -m release.testing
-    xmake
-    cp build/windows/x86/release.testing/kpatch.dll         release/testing
-    cp build/windows/x86/release.testing/left4dead2_fix.exe release/testing
-    cp assets/请读我-自测补丁.txt                     release/testing
-    cp third/4gb_patch.exe                          release/testing
+    cp kpatch.ini                                   release/
 
 @run:
     ./build/{{preset}}/bin/{{target}}

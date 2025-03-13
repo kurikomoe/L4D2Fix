@@ -11,3 +11,28 @@
 由于动态修改代码，请以 -insecure 启动，或者自觉不要进有 vac 的服务器（被 vac 后果自负）
 
 4gb_patch.exe 用于让 left4dead2.exe 最多只能用 2G 内存提高到 4G （32 位系统下内存总计 4G，默认情况下应用只被允许用 2G，剩下的分配给系统）
+
+
+配置文件说明：
+
+[System]
+debug = false  ; 开启调试输出
+
+; Too Many Indices 的上限数值（buffer 大小+ 判断）
+[Indices]
+enable = true    ; 修改too many indices 上限和对应的判断检测。
+value = 131072
+
+
+; dynamic vertex buffer 大小限制（这个修改 buffer 大小）
+[DynamicVB]
+enable  = false   ; 修改 dynamic vertex buffer 的大小。
+value = 65536
+
+; dynamic vertex buffer 判断限制（这个只修改上限判断）
+[GetMaxToRender]
+enable = false      ; 修改 dynamic vertex buffer 的上限（一般用于判断）。
+debug = true
+old_value = 32768   ; 映射机制，这里是原值。
+new_value = 65536  ; 这里是修改值
+

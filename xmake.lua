@@ -10,16 +10,13 @@ set_arch("x86")  -- Use "x64" for 64-bit builds
 add_requires("spdlog")
 add_requires("minhook")
 add_requires("vcpkg::detours")
-
-if is_mode("release") then
-    add_defines("NDEBUG", "NTESTING")
-end
+add_requires("vcpkg::inipp")
 
 local name = "kpatch"
 target(name)
     set_kind("shared")
     add_files("src/dllmain.cpp")
-    add_packages("spdlog", "vcpkg::detours", "minhook")
+    add_packages("spdlog", "vcpkg::detours", "minhook", "vcpkg::inipp")
     add_links("user32", "gdi32")
 
 local name = "left4dead2_fix"
@@ -29,17 +26,3 @@ target(name)
     add_files("assets/app.rc")
     add_links("user32", "gdi32")
     add_packages("vcpkg::detours")
-
-
-rule("mode.release.testing")
-    on_config(function (target)
-        if is_mode("release.testing") then
-            target:add_defines("NDEBUG")
-        end
-    end)
-
-rule("mode.testing")
-    on_config(function (target)
-        if is_mode("testing") then
-        end
-    end)

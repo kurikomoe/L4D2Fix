@@ -27,12 +27,6 @@ int WINAPI wWinMain(
 
     LPCWSTR target_exe_path = game_name;
 
-    // if (std::filesystem::exists(L"left4dead2.exe.orig")) {
-    //     target_exe_path = L"left4dead2.exe.orig";
-    // } else {
-    //     target_exe_path = game_name;
-    // }
-
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
 
