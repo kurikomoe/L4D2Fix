@@ -1,6 +1,7 @@
 -- add_requires("microsoft-proxy 2.4.0")
 add_rules("plugin.compile_commands.autoupdate")
 add_rules("mode.debug", "mode.release")
+set_policy("package.requires_lock", true)
 
 set_languages("cxx20", "c++20")
 

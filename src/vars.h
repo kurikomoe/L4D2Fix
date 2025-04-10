@@ -15,7 +15,7 @@ HMODULE thisModule; // Fix DLL
 
 // Version
 std::string sFixName = "L4D2Fix";
-std::string sFixVer = "1.3.0";
+std::string sFixVer = "1.4.0-debug";
 std::string sLogFile = sFixName + ".log";
 
 // Logger
@@ -34,6 +34,18 @@ namespace  System {
 }
 
 namespace Indices {
+    bool enable;
+    bool debug;
+    int value;
+}
+
+namespace IndexBuffer {
+    bool enable;
+    bool debug;
+    int value;
+}
+
+namespace VertexBuffer {
     bool enable;
     bool debug;
     int value;
@@ -70,6 +82,20 @@ void LoadIni() {
         inipp::extract(ini.sections["Indices"]["debug"], debug);
         inipp::extract(ini.sections["Indices"]["value"], value);
     }
+
+    // {
+    //     using namespace IndexBuffer;
+    //     inipp::extract(ini.sections["IndexBuffer"]["enable"], enable);
+    //     inipp::extract(ini.sections["IndexBuffer"]["debug"], debug);
+    //     inipp::extract(ini.sections["IndexBuffer"]["value"], value);
+    // }
+
+    // {
+    //     using namespace VertexBuffer;
+    //     inipp::extract(ini.sections["VertexBuffer"]["enable"], enable);
+    //     inipp::extract(ini.sections["VertexBuffer"]["debug"], debug);
+    //     inipp::extract(ini.sections["VertexBuffer"]["value"], value);
+    // }
 
     {
         using namespace DynamicVB;

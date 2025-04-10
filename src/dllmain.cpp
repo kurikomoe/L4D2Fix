@@ -21,6 +21,8 @@
 
 #include "hooks_indices.h"
 #include "hooks_dvb.h"
+#include "hooks_indexbuffer.h"
+#include "hooks_vertexbuffer.h"
 
 
 void InitConsole() {
@@ -115,7 +117,7 @@ DWORD __stdcall Main(void*) {
     auto absPath = std::filesystem::absolute(relPath);
 
     std::wcout << absPath << std::endl;
-    spdlog::info(L"Loading Dll fromg {}", absPath.wstring());
+    spdlog::info(L"Loading Dll from {}", absPath.wstring());
 
     HMODULE hDll = LoadLibraryExW(absPath.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
 
@@ -137,6 +139,10 @@ DWORD __stdcall Main(void*) {
     auto ret = 0;
     ret += PatchIndices(hDll, dllName);
     ret += hooks_dvb(hDll, dllName);
+
+    // Experiments
+    // ret += hooks_indexbuffer(hDll, dllName);
+    // ret += VertexBuffer::hooks_vertexbuffer(hDll, dllName);
 
     if (ret != 0) {
         MessageBoxW(NULL, L"未能正常应用补丁，patch 未生效，请联系开发者\n这只是一个警告，可能不影响游戏运行", L"L4D2 Fix", MB_OK);

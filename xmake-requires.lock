@@ -1,0 +1,29 @@
+{
+    __meta__ = {
+        version = "1.0"
+    },
+    ["windows|x64"] = {
+        ["minhook#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "497ce0d3bcc07368698f1f7ec828b4cf991dbe14",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v1.3.3"
+        },
+        ["spdlog#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "497ce0d3bcc07368698f1f7ec828b4cf991dbe14",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v1.15.2"
+        },
+        ["vcpkg::detours#31fecfc4"] = {
+            version = "latest"
+        },
+        ["vcpkg::inipp#31fecfc4"] = {
+            version = "latest"
+        }
+    }
+}
