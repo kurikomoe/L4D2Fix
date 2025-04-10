@@ -2,13 +2,30 @@
 #include <windows.h>
 #include <string>
 #include <filesystem>
+#include <fstream>
 #include <shellapi.h>
+#include <locale>
+#include <codecvt>
 
 #include <detours/detours.h>
+#include <inipp.h>
 
 namespace fs = std::filesystem;
 
-const wchar_t* game_name = L"left4dead2.exe";
+// const wchar_t* game_name = L"left4dead2.exe";
+bool debug = false;
+std::wstring game_name = L"left4dead2.exe";
+
+void init_cfg() {
+    std::ifstream is("kpatch.ini");
+    inipp::Ini<char> ini;
+
+    ini.parse(is);
+    inipp::extract(ini.sections["System"]["debug"], debug);
+    std::string tmp_name;
+    inipp::extract(ini.sections["System"]["target"], tmp_name);
+    game_name = std::wstring(tmp_name.begin(), tmp_name.end());
+}
 
 int WINAPI wWinMain(
     _In_ HINSTANCE hInstance,
@@ -16,6 +33,8 @@ int WINAPI wWinMain(
     _In_ LPWSTR lpwCmdLine,
     _In_ int nShowCmd
 ) {
+    init_cfg();
+
     WCHAR working_path[MAX_PATH];
     GetModuleFileNameW(nullptr, working_path, MAX_PATH);
 
@@ -25,7 +44,7 @@ int WINAPI wWinMain(
 
     LPCSTR dll_path = "kpatch.dll";
 
-    LPCWSTR target_exe_path = game_name;
+    LPCWSTR target_exe_path = game_name.c_str();
 
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;

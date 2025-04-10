@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include <filesystem>
 
-#include "inipp.h"
+#include <inipp.h>
 
 HMODULE baseModule = GetModuleHandle(NULL);
 HMODULE thisModule; // Fix DLL
@@ -31,6 +31,7 @@ inipp::Ini<char> ini;
 namespace cfg {
 namespace  System {
     bool debug;
+    std::wstring target;
 }
 
 namespace Indices {
@@ -74,6 +75,9 @@ void LoadIni() {
     {
         using namespace System;
         inipp::extract(ini.sections["System"]["debug"], debug);
+        std::string tmp_name;
+        inipp::extract(ini.sections["System"]["target"], tmp_name);
+        target = std::wstring(tmp_name.begin(), tmp_name.end());
     }
 
     {

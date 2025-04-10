@@ -17,8 +17,9 @@ build:
     xmake
 
 copy: build
-    cp build/windows/x86/release/kpatch.dll "{{TARGET}}"
+    cp build/windows/x86/release/kpatch.dll         "{{TARGET}}"
     cp build/windows/x86/release/left4dead2_fix.exe "{{TARGET}}"
+    cp kpatch.ini                                   "{{TARGET}}"
 
 copyrel:
     xmake f -m release
@@ -35,7 +36,8 @@ release:
     xmake
     cp build/windows/x86/release/kpatch.dll         release/
     cp build/windows/x86/release/left4dead2_fix.exe release/
-    cp assets/请读我.txt                             release/
+    cp assets/请读我.txt                            release/
+    cp "assets/left4dead2_fix - Shortcut.lnk"       release/
     cp third/4gb_patch.exe                          release/
     cp kpatch.ini                                   release/
 
