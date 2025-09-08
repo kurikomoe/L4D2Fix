@@ -1,0 +1,19 @@
+LIBRARY version
+EXPORTS
+	GetFileVersionInfoA=fGetFileVersionInfoA @1
+	GetFileVersionInfoByHandle=fGetFileVersionInfoByHandle @2
+	GetFileVersionInfoExA=fGetFileVersionInfoExA @3
+	GetFileVersionInfoExW=fGetFileVersionInfoExW @4
+	GetFileVersionInfoSizeA=fGetFileVersionInfoSizeA @5
+	GetFileVersionInfoSizeExA=fGetFileVersionInfoSizeExA @6
+	GetFileVersionInfoSizeExW=fGetFileVersionInfoSizeExW @7
+	GetFileVersionInfoSizeW=fGetFileVersionInfoSizeW @8
+	GetFileVersionInfoW=fGetFileVersionInfoW @9
+	VerFindFileA=fVerFindFileA @10
+	VerFindFileW=fVerFindFileW @11
+	VerInstallFileA=fVerInstallFileA @12
+	VerInstallFileW=fVerInstallFileW @13
+	VerLanguageNameA=fVerLanguageNameA @14
+	VerLanguageNameW=fVerLanguageNameW @15
+	VerQueryValueA=fVerQueryValueA @16
+	VerQueryValueW=fVerQueryValueW @17

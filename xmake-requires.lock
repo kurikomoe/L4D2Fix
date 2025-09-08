@@ -2,6 +2,30 @@
     __meta__ = {
         version = "1.0"
     },
+    ["mingw|x86"] = {
+        ["minhook#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "3d19345df6ab7745c5c779ee9b20166f96bc559a",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v1.3.4"
+        },
+        ["spdlog#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "4333aa942c37880a4830485b0d2043d02d02391d",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v1.15.3"
+        },
+        ["vcpkg::detours#31fecfc4"] = {
+            version = "latest"
+        },
+        ["vcpkg::inipp#31fecfc4"] = {
+            version = "latest"
+        }
+    },
     ["mingw|x86_64"] = {
         ["minhook#31fecfc4"] = {
             repo = {
