@@ -15,6 +15,8 @@
 #include <MinHook.h>
 #include <inipp.h>
 
+#include "proxy.h"
+
 #include "helper.hpp"
 
 #include "vars.h"
@@ -163,6 +165,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
     switch (ul_reason_for_call) {
     case DLL_PROCESS_ATTACH:
+        // Setup proxy
+		char path[MAX_PATH];
+		strcat_s(path, "C:\\Windows\\SysWOW64\\version.dll");
+		GetWindowsDirectory(path, sizeof(path));
+		version.dll = LoadLibrary(path);
+		setupFunctions();
+
         Main(nullptr);
         // HANDLE mainHandle = CreateThread(NULL, 0, Main, 0, CREATE_SUSPENDED, 0);
         // if (mainHandle) {

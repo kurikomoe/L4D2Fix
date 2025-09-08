@@ -13,17 +13,18 @@ add_requires("minhook")
 add_requires("vcpkg::detours")
 add_requires("vcpkg::inipp")
 
-local name = "kpatch"
+local name = "version"
 target(name)
     set_kind("shared")
     add_files("src/dllmain.cpp")
     add_packages("spdlog", "vcpkg::detours", "minhook", "vcpkg::inipp")
+    add_files("third/version.def")
     add_links("user32", "gdi32")
 
-local name = "left4dead2_fix"
-target(name)
-    set_kind("binary")
-    add_files("launcher/main.cpp")
-    add_files("assets/app.rc")
-    add_links("user32", "gdi32")
-    add_packages("vcpkg::detours")
+-- local name = "left4dead2_fix"
+-- target(name)
+--     set_kind("binary")
+--     add_files("launcher/main.cpp")
+--     add_files("assets/app.rc")
+--     add_links("user32", "gdi32")
+--     add_packages("vcpkg::detours")
