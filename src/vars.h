@@ -31,7 +31,12 @@ inipp::Ini<char> ini;
 namespace cfg {
 namespace  System {
     bool debug;
+}
+
+namespace Redirect {
+    bool enable;
     std::wstring target;
+    std::wstring origin;
 }
 
 namespace Indices {
@@ -75,9 +80,18 @@ void LoadIni() {
     {
         using namespace System;
         inipp::extract(ini.sections["System"]["debug"], debug);
-        std::string tmp_name;
-        inipp::extract(ini.sections["System"]["target"], tmp_name);
-        target = std::wstring(tmp_name.begin(), tmp_name.end());
+    }
+
+    {
+        using namespace Redirect;
+        inipp::extract(ini.sections["Redirect"]["enable"], enable);
+        if (enable) {
+            std::string tmp_name;
+            inipp::extract(ini.sections["Redirect"]["target"], tmp_name);
+            target = std::wstring(tmp_name.begin(), tmp_name.end());
+            inipp::extract(ini.sections["Redirect"]["origin"], tmp_name);
+            origin = std::wstring(tmp_name.begin(), tmp_name.end());
+        }
     }
 
     {

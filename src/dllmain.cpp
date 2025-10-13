@@ -23,6 +23,7 @@
 #include "hooks_dvb.h"
 #include "hooks_indexbuffer.h"
 #include "hooks_vertexbuffer.h"
+#include "hooks_exename.h"
 
 
 void InitConsole() {
@@ -87,10 +88,25 @@ DWORD __stdcall Main(void*) {
         MessageBoxW(NULL, L"警告：你已开启 debug 输出。", L"L4D2 Fix", MB_OK|MB_SYSTEMMODAL|MB_ICONWARNING);
     }
 
+    if (cfg::Redirect::enable && cfg::Redirect::origin == L"left4dead2.exe") {
+        auto ret = MessageBoxW(
+            NULL,
+            L"警告，你可能开启了 L4D2Fix 伪装为 Left 4 Dead 2 原版 exe。\n该方法配合 -secure -steam 启动项将允许连接 VAC 服务器。\n如果造成 VAC 封禁，请自行承担后果。", L"L4D2 Fix", MB_OKCANCEL|MB_SYSTEMMODAL|MB_ICONWARNING);
+        switch (ret) {
+        case IDOK:
+            spdlog::warn(L"用户已确认，补丁将继续加载...");
+            break;
+        case IDCANCEL:
+            spdlog::warn(L"用户取消补丁加载...");
+            ExitProcess(0);
+            return TRUE;
+        }
+    }
+
     std::filesystem::path startup_check = L"success.txt";
 
     if (!std::filesystem::exists(startup_check)) {
-        MessageBoxW(
+        auto ret = MessageBoxW(
             NULL,
             L"这是一个启动测试，用于检验补丁是否正常运行。\n请注意由于修改内存，请不要进 VAC 服，后果自负。\n本弹窗仅首次启动出现，后续运行情况参见 L4D2Fix.log 日志文件。\n\n关注B站 5050 直播间，谢谢喵 by KurikoMoe!",
             L"L4D2 Fix", MB_OK);
@@ -133,6 +149,11 @@ DWORD __stdcall Main(void*) {
         MessageBoxW(NULL, std::format(L"Failed to load {}!", dllName).c_str(), L"L4D2 Fix", MB_OK | MB_SYSTEMMODAL | MB_ICONSTOP);
         exit(-1);
     }
+
+    // Fix exe name
+    initExeNameHook();
+    LPSTR buf = new char[255];
+    GetModuleFileNameA(NULL, buf, 255); // Trigger the hook once
 
     // Not known
 

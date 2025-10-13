@@ -10,6 +10,8 @@
 #include <detours/detours.h>
 #include <inipp.h>
 
+#include "vars.h"
+
 namespace fs = std::filesystem;
 
 // const wchar_t* game_name = L"left4dead2.exe";
@@ -17,14 +19,25 @@ bool debug = false;
 std::wstring game_name = L"left4dead2.exe";
 
 void init_cfg() {
-    std::ifstream is("kpatch.ini");
-    inipp::Ini<char> ini;
+    // std::ifstream is("kpatch.ini");
+    // inipp::Ini<char> ini;
 
-    ini.parse(is);
-    inipp::extract(ini.sections["System"]["debug"], debug);
-    std::string tmp_name;
-    inipp::extract(ini.sections["System"]["target"], tmp_name);
-    game_name = std::wstring(tmp_name.begin(), tmp_name.end());
+    // ini.parse(is);
+    // inipp::extract(ini.sections["System"]["debug"], debug);
+    // std::string tmp_name;
+    // inipp::extract(ini.sections["System"]["target"], tmp_name);
+    LoadIni();
+    if (cfg::Redirect::enable) {
+        game_name = cfg::Redirect::target;
+    } else {
+        game_name = L"left4dead2.exe";
+    }
+}
+
+template<typename T, typename ... Args>
+void debugPrint(T fmt, Args... args) {
+    std::wstring errMsg = std::wstring(L"[L4D2Fix] ") + std::vformat(fmt, std::make_wformat_args(args...));
+    OutputDebugStringW(errMsg.c_str());
 }
 
 int WINAPI wWinMain(
@@ -33,6 +46,7 @@ int WINAPI wWinMain(
     _In_ LPWSTR lpwCmdLine,
     _In_ int nShowCmd
 ) {
+    std::wstring errMsg;
     init_cfg();
 
     WCHAR working_path[MAX_PATH];
@@ -40,11 +54,12 @@ int WINAPI wWinMain(
 
     // Change the working directory to the directory containing the DLL.
     fs::path path(working_path);
-    SetCurrentDirectoryW(path.parent_path().wstring().c_str());
+    debugPrint(L"working_path {}\n", working_path);
 
     LPCSTR dll_path = "kpatch.dll";
 
     LPCWSTR target_exe_path = game_name.c_str();
+    debugPrint(L"target_exe_path {}\n", target_exe_path);
 
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
@@ -71,7 +86,7 @@ int WINAPI wWinMain(
             dll_path,
             nullptr)) {
         auto dwError = GetLastError();
-        printf("DetourCreateProcessWithDllEx failed with error %ld\n", dwError);
+        debugPrint(L"DetourCreateProcessWithDllEx failed with error {}\n", dwError);
 
         ExitProcess(9009);
     }

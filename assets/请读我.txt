@@ -1,8 +1,8 @@
-使用方法：
+使用方法 1：
 
 将所有文件放到游戏根目录（left4dead2.exe 所在目录）
 
-使用 `left4dead2_fix.exe` 启动游戏（目前不知道如何让 steam 能加载这个 launcher）
+使用 `left4dead2_fix.exe` 启动游戏
 
 如果需要添加启动项，请右键 `left4dead2_fix.exe` 创建快捷方式，之后在目标字段后面添加启动项（如果不会请问 deepseek）
 
@@ -10,13 +10,39 @@
 
 由于动态修改代码，请以 -insecure 启动，或者自觉不要进有 vac 的服务器（被 vac 后果自负）
 
-4gb_patch.exe 用于让 left4dead2.exe 最多只能用 2G 内存提高到 4G （32 位系统下内存总计 4G，默认情况下应用只被允许用 2G，剩下的分配给系统）
+
+
+
+使用方法 2：
+
+将所有文件放到游戏根目录（left4dead2.exe 所在目录）
+
+将真正的游戏 exe (left4dead2.exe) 改名为 left4dead2.orig.exe
+
+将 `left4dead2_fix.exe` 改名为 `left4dead2.exe`
+
+修改 ini 文件，设置 Redirect 中的 enable = true。
+
+在 steam 中添加启动项 -steam -secure
+
+从 Steam 启动游戏，确认弹出的警告。
+
+该方法会允许进入 vac 服务器，但是后果自负。
+
+
+
 
 
 配置文件说明：
 
 [System]
 debug = false  ; 开启调试输出
+
+[Redirect]   
+enable = true  ; 开启伪装 exe   
+target = left4dead2.orig.exe   ; 真正的 l4d2 游戏 exe 文件
+origin = left4dead2.exe        ; 伪装的名字（必须是这个，游戏会自动寻找 left4dead2 文件夹加载资源）
+
 
 ; Too Many Indices 的上限数值（buffer 大小+ 判断）
 [Indices]
