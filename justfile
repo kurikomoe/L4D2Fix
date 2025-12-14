@@ -13,7 +13,7 @@ clean:
     rm -rf build
 
 build:
-    xmake f -m release
+    xmake f -m release -y
     xmake
 
 copy: build
@@ -22,7 +22,7 @@ copy: build
     cp kpatch.ini                                   "{{TARGET}}"
 
 copyrel:
-    xmake f -m release
+    xmake f -m release -y
     xmake
     cp build/windows/x86/release/kpatch.dll "{{TARGET}}"
     cp build/windows/x86/release/left4dead2_fix.exe "{{TARGET}}"
@@ -32,7 +32,7 @@ release:
     mkdir -p release
 
     # release
-    xmake f -m release
+    xmake f -m release -y
     xmake
     cp build/windows/x86/release/kpatch.dll         release/
     cp build/windows/x86/release/left4dead2_fix.exe release/
