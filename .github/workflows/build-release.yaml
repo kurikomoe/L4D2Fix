@@ -1,0 +1,15 @@
+name: Build release
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload_artifacts:
+        type: boolean
+        default: true
+
+jobs:
+  build-release:
+    uses: ./.github/workflows/build.yaml
+    with:
+      build_type: release
+      upload_artifacts: ${{ inputs.upload_artifacts || true }}

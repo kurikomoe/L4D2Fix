@@ -1,0 +1,25 @@
+name: Build debug
+
+on:
+  push:
+    branches:
+      - '*'
+    paths-ignore:
+      - 'README.md'
+      - '.gitignore'
+  pull_request:
+    paths-ignore:
+      - 'README.md'
+      - '.gitignore'
+  workflow_dispatch:
+    inputs:
+      upload_artifacts:
+        type: boolean
+        default: false
+
+jobs:
+  build-debug:
+    uses: ./.github/workflows/build.yaml
+    with:
+      build_type: debug
+      upload_artifacts: ${{ inputs.upload_artifacts || false }}

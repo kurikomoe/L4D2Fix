@@ -12,8 +12,8 @@ init:
 clean:
     rm -rf build
 
-build:
-    xmake f -m release -y
+build xmake_type='release':
+    xmake f -m {{ xmake_type }} -y
     xmake
 
 copy: build
@@ -21,10 +21,8 @@ copy: build
     cp build/windows/x86/release/left4dead2_fix.exe "{{TARGET}}"
     cp kpatch.ini                                   "{{TARGET}}"
 
-copyrel:
-    xmake f -m release -y
-    xmake
-    cp build/windows/x86/release/kpatch.dll "{{TARGET}}"
+copyrel: build
+    cp build/windows/x86/release/kpatch.dll         "{{TARGET}}"
     cp build/windows/x86/release/left4dead2_fix.exe "{{TARGET}}"
 
 release:
