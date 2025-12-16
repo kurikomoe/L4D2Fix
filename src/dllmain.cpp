@@ -93,7 +93,7 @@ void FirstRunCheck() {
              "本弹窗仅首次启动出现，后续运行情况参见 L4D2Fix.log 日志文件。\n\n"
              "项目地址: https://github.com/kurikomoe/L4D2Fix"
              "关注B站 5050 直播间，谢谢喵! --KurikoMoe",
-            pMsgboxTitle, MB_OK);
+            pMsgboxTitle, MB_OK|MB_SYSTEMMODAL);
     }
 
 }
