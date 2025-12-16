@@ -88,8 +88,12 @@ void FirstRunCheck() {
     if (!std::filesystem::exists(startup_check)) {
         auto ret = MessageBoxW(
             NULL,
-            L"这是一个启动测试，用于检验补丁是否正常运行。\n请注意由于修改内存，请不要进 VAC 服，后果自负。\n本弹窗仅首次启动出现，后续运行情况参见 L4D2Fix.log 日志文件。\n\n关注B站 5050 直播间，谢谢喵 by KurikoMoe!",
-            L"L4D2 Fix", MB_OK);
+            L"这是一个启动测试，用于检验补丁是否正常运行。\n"
+             "请注意由于修改内存，请不要进 VAC 服，后果自负。\n"
+             "本弹窗仅首次启动出现，后续运行情况参见 L4D2Fix.log 日志文件。\n\n"
+             "项目地址: https://github.com/kurikomoe/L4D2Fix"
+             "关注B站 5050 直播间，谢谢喵! --KurikoMoe",
+            pMsgboxTitle, MB_OK);
     }
 
 }
@@ -100,19 +104,22 @@ DWORD __stdcall Main(void*) {
     Logging();
 
     if (cfg::System::log_level == "debug") {
-        MessageBoxW(NULL, L"警告：你已开启 debug 输出。", L"L4D2 Fix", MB_OK|MB_SYSTEMMODAL|MB_ICONWARNING);
+        MessageBoxW(NULL, L"警告：你已开启 debug 输出。", pMsgboxTitle, MB_OK|MB_SYSTEMMODAL|MB_ICONWARNING);
     }
 
     if (cfg::Redirect::enable && cfg::Redirect::origin == L"left4dead2.exe") {
         auto ret = MessageBoxW(
             NULL,
-            L"警告，你可能开启了 L4D2Fix 伪装为 Left 4 Dead 2 原版 exe。\n该方法配合 -secure -steam 启动项将允许连接 VAC 服务器。\n如果造成 VAC 封禁，请自行承担后果。", L"L4D2 Fix", MB_OKCANCEL|MB_SYSTEMMODAL|MB_ICONWARNING);
+            L"警告，你可能开启了 L4D2Fix 伪装为 Left 4 Dead 2 原版 exe。\n"
+             "该方法配合 -secure -steam 启动项将允许连接 VAC 服务器。\n"
+             "如果造成 VAC 封禁，请自行承担后果。",
+            pMsgboxTitle, MB_OKCANCEL|MB_SYSTEMMODAL|MB_ICONWARNING);
         switch (ret) {
         case IDOK:
-            spdlog::warn(L"用户已确认，补丁将继续加载...");
+            spdlog::warn(L"用户已确认使用伪装方法，补丁将继续加载...");
             break;
         case IDCANCEL:
-            spdlog::warn(L"用户取消补丁加载...");
+            spdlog::warn(L"用户已取消使用伪装方法，取消补丁加载...");
             ExitProcess(0);
             return TRUE;
         }
@@ -152,7 +159,7 @@ DWORD __stdcall Main(void*) {
             buf, (sizeof(buf) / sizeof(wchar_t)), NULL);
         std::wcout << errCode << std::endl;
         std::wcout << buf << std::endl;
-        MessageBoxW(NULL, std::format(L"Failed to load {}!", dllName).c_str(), L"L4D2 Fix", MB_OK | MB_SYSTEMMODAL | MB_ICONSTOP);
+        MessageBoxW(NULL, std::format(L"Failed to load {}!", dllName).c_str(), pMsgboxTitle, MB_OK | MB_SYSTEMMODAL | MB_ICONSTOP);
         exit(-1);
     }
 
@@ -172,7 +179,10 @@ DWORD __stdcall Main(void*) {
     // ret += VertexBuffer::hooks_vertexbuffer(hDll, dllName);
 
     if (ret != 0) {
-        MessageBoxW(NULL, L"未能正常应用补丁，patch 未生效，请联系开发者\n这只是一个警告，可能不影响游戏运行", L"L4D2 Fix", MB_OK);
+        MessageBoxW(NULL,
+            L"未能正常应用补丁，patch 未生效，请联系开发者!\n"
+              "这只是一个警告，可能不影响游戏运行",
+            pMsgboxTitle, MB_OK | MB_ICONWARNING);
     }
     return TRUE;
 }

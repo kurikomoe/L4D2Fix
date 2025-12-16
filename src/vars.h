@@ -18,6 +18,9 @@ std::string sFixName = "L4D2Fix";
 std::string sFixVer = "1.4.0-debug";
 std::string sLogFile = sFixName + ".log";
 
+// Strings
+const wchar_t* pMsgboxTitle = L"L4D2Fix - by KurikoMoe";
+
 // Logger
 std::shared_ptr<spdlog::logger> logger;
 std::filesystem::path sExePath;
