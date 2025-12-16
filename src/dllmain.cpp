@@ -33,7 +33,7 @@ void InitConsole() {
 }
 
 void Logging() {
-    if (cfg::System::debug) {
+    if (cfg::System::log_level == "debug") {
         InitConsole();
     }
     // Get this module path
@@ -56,8 +56,11 @@ void Logging() {
 
         auto start_time = std::chrono::system_clock::now();
 
-        if (cfg::System::debug) {
-            spdlog::set_level(spdlog::level::debug);
+        if (!cfg::System::log_level.empty()) {
+          spdlog::set_level(spdlog::level::from_str(cfg::System::log_level));
+        }
+        else {
+          spdlog::set_level(spdlog::level::info);
         }
 
         spdlog::flush_on(spdlog::level::debug);
@@ -79,12 +82,24 @@ void Logging() {
     }
 }
 
+void FirstRunCheck() {
+    std::filesystem::path startup_check = sLogFile;
+
+    if (!std::filesystem::exists(startup_check)) {
+        auto ret = MessageBoxW(
+            NULL,
+            L"这是一个启动测试，用于检验补丁是否正常运行。\n请注意由于修改内存，请不要进 VAC 服，后果自负。\n本弹窗仅首次启动出现，后续运行情况参见 L4D2Fix.log 日志文件。\n\n关注B站 5050 直播间，谢谢喵 by KurikoMoe!",
+            L"L4D2 Fix", MB_OK);
+    }
+
+}
 
 DWORD __stdcall Main(void*) {
+    FirstRunCheck();
     LoadIni();
     Logging();
 
-    if (cfg::System::debug) {
+    if (cfg::System::log_level == "debug") {
         MessageBoxW(NULL, L"警告：你已开启 debug 输出。", L"L4D2 Fix", MB_OK|MB_SYSTEMMODAL|MB_ICONWARNING);
     }
 
@@ -101,15 +116,6 @@ DWORD __stdcall Main(void*) {
             ExitProcess(0);
             return TRUE;
         }
-    }
-
-    std::filesystem::path startup_check = L"success.txt";
-
-    if (!std::filesystem::exists(startup_check)) {
-        auto ret = MessageBoxW(
-            NULL,
-            L"这是一个启动测试，用于检验补丁是否正常运行。\n请注意由于修改内存，请不要进 VAC 服，后果自负。\n本弹窗仅首次启动出现，后续运行情况参见 L4D2Fix.log 日志文件。\n\n关注B站 5050 直播间，谢谢喵 by KurikoMoe!",
-            L"L4D2 Fix", MB_OK);
     }
 
     std::wstring cmdline = GetCommandLineW();
@@ -167,11 +173,7 @@ DWORD __stdcall Main(void*) {
 
     if (ret != 0) {
         MessageBoxW(NULL, L"未能正常应用补丁，patch 未生效，请联系开发者\n这只是一个警告，可能不影响游戏运行", L"L4D2 Fix", MB_OK);
-    } else {
-        std::fstream file(startup_check, std::ios::out);
-        file << "补丁已生效，关闭启动提示，删除本文件可以重新启用" << std::endl;
     }
-
     return TRUE;
 }
 

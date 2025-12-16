@@ -30,7 +30,7 @@ inipp::Ini<char> ini;
 // Global config vars
 namespace cfg {
 namespace  System {
-    bool debug;
+    std::string log_level;
 }
 
 namespace Redirect {
@@ -79,7 +79,7 @@ void LoadIni() {
 
     {
         using namespace System;
-        inipp::extract(ini.sections["System"]["debug"], debug);
+        inipp::extract(ini.sections["System"]["log_level"], log_level);
     }
 
     {
