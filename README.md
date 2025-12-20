@@ -6,6 +6,7 @@
 
 ![26cc8e80ba807d378291266749f824bc](https://github.com/user-attachments/assets/9a6aed1c-ef76-43a0-b9bb-dd357f0b9261)
 
+### [使用说明](USAGE.md)
 
 ### 编译
 ```
@@ -18,8 +19,6 @@ just build
 
 逆向的话，基本上就是定位字符串，之后 trace 追一下代码的执行流（或者直接搜索立即数 0x8000，反正也没几个结果，之后猜一下函数是干什么的）
 
-
-
 从源代码更简单，直接看就行了。
 
 ```c++
@@ -31,8 +30,6 @@ enum
 ```
 
 位置： https://github.com/nillerusr/source-engine/blob/29985681a18508e78dc79ad863952f830be237b6/materialsystem/shaderapidx9/meshdx8.cpp#L71
-
-
 
 对比 dx10：（32倍差距）
 

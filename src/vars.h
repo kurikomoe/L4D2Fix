@@ -18,6 +18,9 @@ std::string sFixName = "L4D2Fix";
 std::string sFixVer = "1.4.0-debug";
 std::string sLogFile = sFixName + ".log";
 
+// Strings
+const wchar_t* pMsgboxTitle = L"L4D2Fix - by KurikoMoe";
+
 // Logger
 std::shared_ptr<spdlog::logger> logger;
 std::filesystem::path sExePath;
@@ -30,7 +33,7 @@ inipp::Ini<char> ini;
 // Global config vars
 namespace cfg {
 namespace  System {
-    bool debug;
+    std::string log_level;
 }
 
 namespace Redirect {
@@ -79,7 +82,7 @@ void LoadIni() {
 
     {
         using namespace System;
-        inipp::extract(ini.sections["System"]["debug"], debug);
+        inipp::extract(ini.sections["System"]["log_level"], log_level);
     }
 
     {

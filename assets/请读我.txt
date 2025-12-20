@@ -36,7 +36,7 @@
 配置文件说明：
 
 [System]
-debug = false  ; 开启调试输出
+log_level = info  ; 日志级别, trace debug info warn error critical off
 
 [Redirect]   
 enable = true  ; 开启伪装 exe   
