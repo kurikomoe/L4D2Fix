@@ -40,7 +40,7 @@ jobs:
       run: just --set XMAKE_TYPE ${{ inputs.build_type }} build
     - name: Install
       if: ${{ inputs.upload_artifacts }}
-      run: just install
+      run: just distinstall
 
     - name: Upload a Build Artifact
       if: ${{ inputs.upload_artifacts }}
