@@ -37,9 +37,10 @@ jobs:
       uses: extractions/setup-just@v3
 
     - name: Build
-      run: |
-        just build ${{ inputs.build_type }}
-        just copy
+      run: just --set XMAKE_TYPE ${{ inputs.build_type }} build
+    - name: Install
+      if: ${{ inputs.upload_artifacts }}
+      run: just install
 
     - name: Upload a Build Artifact
       if: ${{ inputs.upload_artifacts }}

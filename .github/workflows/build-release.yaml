@@ -1,6 +1,11 @@
 name: Build release
 
 on:
+  push:
+    branches:
+      - 'v*'
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       upload_artifacts:
