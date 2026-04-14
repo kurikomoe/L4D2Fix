@@ -35,7 +35,7 @@ void InitConsole() {
 }
 
 void Logging() {
-    if (cfg::System::log_level == "debug") {
+    if (cfg::System::debug) {
         InitConsole();
     }
     // Get this module path
@@ -58,8 +58,8 @@ void Logging() {
 
         auto start_time = std::chrono::system_clock::now();
 
-        if (!cfg::System::log_level.empty()) {
-          spdlog::set_level(spdlog::level::from_str(cfg::System::log_level));
+        if (cfg::System::debug) {
+          spdlog::set_level(spdlog::level::debug);
         }
         else {
           spdlog::set_level(spdlog::level::info);
@@ -105,23 +105,27 @@ DWORD __stdcall Main(void*) {
     LoadIni();
     Logging();
 
-    if (cfg::System::log_level == "debug") {
-        MessageBoxW(NULL, L"警告：你已开启 debug 输出。", pMsgboxTitle, MB_OK|MB_SYSTEMMODAL|MB_ICONWARNING);
+    if (cfg::System::debug) {
+        MessageBoxW(
+            nullptr,
+            L"警告：你已开启 debug 输出。",
+            L"L4D2 Fix",
+            MB_OK|MB_SYSTEMMODAL|MB_ICONWARNING);
     }
 
     if (cfg::Redirect::enable && cfg::Redirect::origin == L"left4dead2.exe") {
         auto ret = MessageBoxW(
             NULL,
             L"警告，你可能开启了 L4D2Fix 伪装为 Left 4 Dead 2 原版 exe。\n"
-             "该方法配合 -secure -steam 启动项将允许连接 VAC 服务器。\n"
-             "如果造成 VAC 封禁，请自行承担后果。",
+            L"该方法配合 -secure -steam 启动项将允许连接 VAC 服务器。\n"
+            L"如果造成 VAC 封禁，请自行承担后果。",
             pMsgboxTitle, MB_OKCANCEL|MB_SYSTEMMODAL|MB_ICONWARNING);
         switch (ret) {
         case IDOK:
             spdlog::warn(L"用户已确认使用伪装方法，补丁将继续加载...");
             break;
-        case IDCANCEL:
-            spdlog::warn(L"用户已取消使用伪装方法，取消补丁加载...");
+        default:
+            spdlog::warn(L"用户取消补丁加载...");
             ExitProcess(0);
             return TRUE;
         }
@@ -150,7 +154,10 @@ DWORD __stdcall Main(void*) {
     std::wcout << absPath << std::endl;
     spdlog::info(L"Loading Dll from {}", absPath.wstring());
 
-    HMODULE hDll = LoadLibraryExW(absPath.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
+    HMODULE hDll = LoadLibraryExW(
+        absPath.c_str(),
+        nullptr,
+        LOAD_WITH_ALTERED_SEARCH_PATH);
 
     if (hDll == nullptr) {
         auto errCode = GetLastError();
@@ -161,13 +168,17 @@ DWORD __stdcall Main(void*) {
             buf, (sizeof(buf) / sizeof(wchar_t)), NULL);
         std::wcout << errCode << std::endl;
         std::wcout << buf << std::endl;
-        MessageBoxW(NULL, std::format(L"Failed to load {}!", dllName).c_str(), pMsgboxTitle, MB_OK | MB_SYSTEMMODAL | MB_ICONSTOP);
+        MessageBoxW(
+            NULL,
+            std::format(L"Failed to load {}!", dllName).c_str(),
+            pMsgboxTitle,
+            MB_OK | MB_SYSTEMMODAL | MB_ICONSTOP);
         exit(-1);
     }
 
     // Fix exe name
     initExeNameHook();
-    LPSTR buf = new char[255];
+    auto* buf = new char[255];
     GetModuleFileNameA(NULL, buf, 255); // Trigger the hook once
 
     // Not known
@@ -181,22 +192,16 @@ DWORD __stdcall Main(void*) {
     // ret += VertexBuffer::hooks_vertexbuffer(hDll, dllName);
 
     if (ret != 0) {
-        unsigned short int msgID = MessageBoxW(NULL,
+        unsigned short int msgID = MessageBoxW(
+            NULL,
             L"未能正常应用补丁，patch 未生效，请联系开发者!\n"
-              "这只是一个警告，可能不影响游戏运行"
-              "是否前往Github issue进行反馈?",
+            L"这只是一个警告，可能不影响游戏运行",
             pMsgboxTitle, MB_YESNO | MB_ICONWARNING);
-        if(msgID == IDYES) {
-            HINSTANCE result = ShellExecuteW(0, 0, L"https://github.com/kurikomoe/L4D2Fix/issues/new", 0, 0 , SW_SHOW);
-            if ((INT_PTR)result <= 32) {
-                spdlog::error(L"Cannot open link to Github issue: {}", (INT_PTR)result);
-            }
-        }
     }
     return TRUE;
 }
 
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID /*lpReserved*/) {
     if (DetourIsHelperProcess()) {
         return TRUE;
     }
@@ -213,6 +218,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         //     CloseHandle(mainHandle);
         // }
         break;
+    default: break;
     }
     return TRUE;
 }

@@ -21,16 +21,33 @@ DWORD __stdcall hGetModuleFileNameA(
     auto ret = oGetModuleFileNameAFn(hModule, lpFilename, nSize);
     if (!lpFilename)  return ret;
 
+    void* callerAddress = _ReturnAddress();
+    HMODULE callerModule = NULL;
+    GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)callerAddress, &callerModule);
+
+    char moduleName[MAX_PATH];
+    auto retCaller = oGetModuleFileNameAFn(callerModule, moduleName, MAX_PATH);
+
+    const std::vector<std::string> moduleNameList = {
+        "launcher.dll",
+    };
+    spdlog::info("GetModuleFileNameA called by module: {}", moduleName);
+    for (auto& name : moduleNameList) {
+        if (!strstr(moduleName, name.c_str())) {
+            return ret;
+        }
+    }
+
     fs::path filePath(lpFilename);
     fs::path newFilePath(lpFilename);
     std::wstring exeName = filePath.filename().wstring();
     if (cfg::Redirect::enable && exeName == cfg::Redirect::target) {
+        spdlog::info("GetModuleFileNameA called by module: {}", moduleName);
         std::string newExeName = std::string(
             cfg::Redirect::origin.begin(), cfg::Redirect::origin.end());
         newFilePath = newFilePath.replace_filename(newExeName);
         std::string newFilePathStr = newFilePath.string();
         memcpy_s(lpFilename, nSize, newFilePath.string().c_str(), newFilePathStr.size() + 1);
-        spdlog::info("GetModuleFileNameA hooked: \n{} => {}", filePath.string(), newFilePath.string());
     }
     return ret;
 }

@@ -14,18 +14,10 @@
 
 namespace fs = std::filesystem;
 
-// const wchar_t* game_name = L"left4dead2.exe";
 bool debug = false;
 std::wstring game_name = L"left4dead2.exe";
 
 void init_cfg() {
-    // std::ifstream is("kpatch.ini");
-    // inipp::Ini<char> ini;
-
-    // ini.parse(is);
-    // inipp::extract(ini.sections["System"]["debug"], debug);
-    // std::string tmp_name;
-    // inipp::extract(ini.sections["System"]["target"], tmp_name);
     LoadIni();
     if (cfg::Redirect::enable) {
         game_name = cfg::Redirect::target;

@@ -34,7 +34,7 @@ uninstall:
 copyall: build
     cp build/windows/x86/release/kpatch.dll         "{{TARGET}}"
     cp build/windows/x86/release/left4dead2_fix.exe "{{TARGET}}"
-    cp kpatch.ini                                   "{{TARGET}}"
+    # cp kpatch.ini                                   "{{TARGET}}"
 
 copy: build
     cp build/windows/x86/release/kpatch.dll         "{{TARGET}}"

@@ -51,6 +51,8 @@ Checks: >
   -modernize-avoid-c-arrays,
   -readability-redundant-control-flow,
   -google-build-using-namespace,
+  -misc-use-internal-linkage,
+  -readability-implicit-bool-conversion,
 
 # -modernize-use-nodiscard: [[nodiscard]] for const func
 # -bugprone-easily-swappable-parameters: I cannot avoid this fn(i32, i32)

@@ -15,7 +15,7 @@ HMODULE thisModule; // Fix DLL
 
 // Version
 std::string sFixName = "L4D2Fix";
-std::string sFixVer = "1.4.0-debug";
+std::string sFixVer = "1.4.0";
 std::string sLogFile = sFixName + ".log";
 
 // Strings
@@ -33,7 +33,7 @@ inipp::Ini<char> ini;
 // Global config vars
 namespace cfg {
 namespace  System {
-    std::string log_level;
+    bool debug;
 }
 
 namespace Redirect {
@@ -82,7 +82,7 @@ void LoadIni() {
 
     {
         using namespace System;
-        inipp::extract(ini.sections["System"]["log_level"], log_level);
+        inipp::extract(ini.sections["System"]["debug"], debug);
     }
 
     {
