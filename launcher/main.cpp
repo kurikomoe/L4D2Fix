@@ -1,11 +1,8 @@
-//#pragma comment(linker, "/subsystem:\"Windows\" /entry:\"mainCRTStartup\"")
+// #pragma comment(linker, "/subsystem:\"Windows\" /entry:\"mainCRTStartup\"")
 #include <windows.h>
 #include <string>
 #include <filesystem>
-#include <fstream>
 #include <shellapi.h>
-#include <locale>
-#include <codecvt>
 
 #include <detours/detours.h>
 #include <inipp.h>
@@ -14,44 +11,54 @@
 
 namespace fs = std::filesystem;
 
-bool debug = false;
-std::wstring game_name = L"left4dead2.exe";
+const LPCSTR dll_path = "kpatch.dll";
+std::wstring gameName = L"left4dead2.exe";
 
 void init_cfg() {
     LoadIni();
     if (cfg::Redirect::enable) {
-        game_name = cfg::Redirect::target;
+        gameName = cfg::Redirect::target;
     } else {
-        game_name = L"left4dead2.exe";
+        gameName = L"left4dead2.exe";
     }
 }
 
-template<typename T, typename ... Args>
+template <typename T, typename... Args>
 void debugPrint(T fmt, Args... args) {
     std::wstring errMsg = std::wstring(L"[L4D2Fix] ") + std::vformat(fmt, std::make_wformat_args(args...));
     OutputDebugStringW(errMsg.c_str());
 }
 
 int WINAPI wWinMain(
-    _In_ HINSTANCE hInstance,
-    _In_opt_ HINSTANCE hPrevInstance,
+    _In_ HINSTANCE /*hInstance*/,
+    _In_opt_ HINSTANCE /*hPrevInstance*/,
     _In_ LPWSTR lpwCmdLine,
-    _In_ int nShowCmd
-) {
-    std::wstring errMsg;
+    _In_ int /*nShowCmd*/) {
     init_cfg();
 
-    WCHAR working_path[MAX_PATH];
-    GetModuleFileNameW(nullptr, working_path, MAX_PATH);
+    WCHAR buffer[MAX_PATH];
+    GetModuleFileNameW(nullptr, buffer, MAX_PATH);
 
     // Change the working directory to the directory containing the DLL.
-    fs::path path(working_path);
-    debugPrint(L"working_path {}\n", working_path);
+    fs::path selfPath(buffer);
+    fs::path workingPath = selfPath.parent_path();
+    debugPrint(L"working_path {}\n", workingPath.c_str());
 
-    LPCSTR dll_path = "kpatch.dll";
+    LPCWSTR targetExe = gameName.c_str();
+    debugPrint(L"target_exe_path {}\n", targetExe);
 
-    LPCWSTR target_exe_path = game_name.c_str();
-    debugPrint(L"target_exe_path {}\n", target_exe_path);
+    if (selfPath.filename() == gameName) {
+        debugPrint(L"Avoid launching self, exiting.\n");
+        MessageBoxW(
+            NULL,
+            L"警告：配置错误，补丁尝试启动的目标为自身，请检查配置！\n"
+            L"为防止卡死系统 L4D2Fix 将强制退出。\n"
+            L"Fatal：Invalid config or setup！\n"
+            L"The patch is trying to launch itself, please check the config!\n"
+            L"Forcing exit to prevent system freeze.",
+            L"L4D2Fix", MB_OK|MB_SYSTEMMODAL|MB_ICONERROR);
+        ExitProcess(0);
+    }
 
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
@@ -65,18 +72,19 @@ int WINAPI wWinMain(
 
     SetLastError(0);
     if (TRUE != DetourCreateProcessWithDllExW(
-            target_exe_path,
-            lpwCmdLine,
-            nullptr,
-            nullptr,
-            TRUE,
-            dwFlags,
-            nullptr,
-            nullptr,
-            &si,
-            &pi,
-            dll_path,
-            nullptr)) {
+        targetExe,
+        lpwCmdLine,
+        nullptr,
+        nullptr,
+        TRUE,
+        dwFlags,
+        nullptr,
+        nullptr,
+        &si,
+        &pi,
+        dll_path,
+        nullptr
+    )) {
         auto dwError = GetLastError();
         debugPrint(L"DetourCreateProcessWithDllEx failed with error {}\n", dwError);
 
@@ -86,6 +94,9 @@ int WINAPI wWinMain(
     ResumeThread(pi.hThread);
 
     WaitForSingleObject(pi.hProcess, INFINITE);
+
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
 
     return 0;
 }

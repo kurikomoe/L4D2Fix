@@ -11,7 +11,7 @@ target := "main"
 
 build:
     xmake f -m {{XMAKE_TYPE}} -y
-    xmake
+    xmake -j
 
 clean:
     rm -rf build

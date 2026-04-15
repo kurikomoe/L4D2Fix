@@ -59,10 +59,10 @@ void Logging() {
         auto start_time = std::chrono::system_clock::now();
 
         if (cfg::System::debug) {
-          spdlog::set_level(spdlog::level::debug);
+            spdlog::set_level(spdlog::level::debug);
         }
         else {
-          spdlog::set_level(spdlog::level::info);
+            spdlog::set_level(spdlog::level::info);
         }
 
         spdlog::flush_on(spdlog::level::debug);
@@ -88,13 +88,13 @@ void FirstRunCheck() {
     std::filesystem::path startup_check = sLogFile;
 
     if (!std::filesystem::exists(startup_check)) {
-        auto ret = MessageBoxW(
+        MessageBoxW(
             NULL,
             L"这是一个启动测试，用于检验补丁是否正常运行。\n"
-             "请注意由于修改内存，请不要进 VAC 服，后果自负。\n"
-             "本弹窗仅首次启动出现，后续运行情况参见 L4D2Fix.log 日志文件。\n\n"
-             "项目地址: https://github.com/kurikomoe/L4D2Fix\n"
-             "关注B站 5050 直播间，谢谢喵! --KurikoMoe",
+            L"请注意由于修改内存，请不要进 VAC 服，后果自负。\n"
+            L"本弹窗仅首次启动出现，后续运行情况参见 L4D2Fix.log 日志文件。\n\n"
+            L"项目地址: https://github.com/kurikomoe/L4D2Fix\n"
+            L"关注B站 5050 直播间，谢谢喵! --KurikoMoe",
             pMsgboxTitle, MB_OK|MB_SYSTEMMODAL);
     }
 
@@ -135,13 +135,11 @@ DWORD __stdcall Main(void*) {
     spdlog::info(L"Startup commandline: {}", cmdline.c_str());
 
     std::wstring dllName = L"shaderapidx9.dll";
-    bool isVulkan = false;
 
-    std::transform(cmdline.cbegin(), cmdline.cend(), cmdline.begin(), ::tolower);
+    std::transform(cmdline.cbegin(), cmdline.cend(), cmdline.begin(), ::towlower);
     if (cmdline.find(L"-vulkan") != std::wstring::npos) {
         dllName = L"shaderapivk.dll";
         spdlog::info(L"Detected Vulkan: using {}", dllName);
-        isVulkan = true;
     } else {
         // Preload d3d9.dll
         LoadLibraryW(L"d3d9.dll");
@@ -161,7 +159,7 @@ DWORD __stdcall Main(void*) {
 
     if (hDll == nullptr) {
         auto errCode = GetLastError();
-        wchar_t buf[255];
+        wchar_t buf[MAX_PATH];
         FormatMessageW(
             FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
             NULL, errCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
@@ -178,10 +176,8 @@ DWORD __stdcall Main(void*) {
 
     // Fix exe name
     initExeNameHook();
-    auto* buf = new char[255];
-    GetModuleFileNameA(NULL, buf, 255); // Trigger the hook once
-
-    // Not known
+    auto* buf = new char[MAX_PATH];
+    GetModuleFileNameA(NULL, buf, MAX_PATH); // Trigger the hook once
 
     auto ret = 0;
     ret += PatchIndices(hDll, dllName);
